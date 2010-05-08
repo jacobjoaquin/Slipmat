@@ -27,8 +27,8 @@ import math
 import operator
 import struct
 
-sr = 8000
-ksmps = 800
+sr = 11025
+ksmps = 100
 
 class UGen:
     '''All unit generator classes inherit from this.'''
@@ -42,15 +42,15 @@ class UGen:
 class Instr():
     '''Creates a UGen class from a UGen returning function.'''
 
-    def __init__(self, ugen_def):
+    def __init__(self, ugen_def, *args, **kwargs):
         self.ugen_def = ugen_def
         
-    def __call__(self, *args):
-        return self.__CreateUGen(self.ugen_def, *args)
+    def __call__(self, *args, **kwargs):
+        return self.__CreateUGen(self.ugen_def, *args, **kwargs)
 
     class __CreateUGen(UGen):
-        def __init__(self, ugen_def, *args):
-            self.ugen_def = ugen_def(*args)
+        def __init__(self, ugen_def, *args, **kwargs):
+            self.ugen_def = ugen_def(*args, **kwargs)
 
         def __iter__(self):
             self.index = 0
@@ -153,24 +153,35 @@ class ScoreEvents:
         self.event_dict = {}
         self.ID = 0
         self.last_frame = 0
+        self.time = []
 
     def event(self, start, dur, ugen):
-        ugen_start = sec_to_frames(start * 60 / float(self.tempo))
-        ugen_end = ugen_start + sec_to_frames(dur * 60 / float(self.tempo))
-        self.last_frame = max(ugen_start, ugen_end, self.last_frame)
-
-        if ugen_start not in self.event_dict.keys():
-            self.event_dict.update({ugen_start: [(self.ID, 'start', ugen)]})
-        else:
-            self.event_dict[ugen_start].append((self.ID, 'start', ugen))
-
-        if ugen_end not in self.event_dict.keys():
-            self.event_dict.update({ugen_end: [(self.ID, 'stop', None)]})
-        else:
-            self.event_dict[ugen_end].append((self.ID, 'stop', None))
-
-        self.ID += 1
+        if type(start) is not list:
+            start = [start]
+            
+        for i in start:
+            t_start = sum(self.time, i)
+            ugen_start = sec_to_frames(t_start * bps(self.tempo))
+            ugen_end = ugen_start + sec_to_frames(dur * 60 / float(self.tempo))
+            self.last_frame = max(ugen_start, ugen_end, self.last_frame)
     
+            if ugen_start not in self.event_dict.keys():
+                self.event_dict.update({ugen_start: [(self.ID, 'start', ugen)]})
+            else:
+                self.event_dict[ugen_start].append((self.ID, 'start', ugen))
+    
+            if ugen_end not in self.event_dict.keys():
+                self.event_dict.update({ugen_end: [(self.ID, 'stop', None)]})
+            else:
+                self.event_dict[ugen_end].append((self.ID, 'stop', None))
+    
+            self.ID += 1
+
+def bps(tempo):
+    '''Beats per second.'''
+    
+    return 60 / float(tempo)
+
 def cpspch(p):
     '''Convert pitch class to frequency.'''
     
