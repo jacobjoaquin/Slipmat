@@ -156,26 +156,22 @@ class ScoreEvents:
         self.time = []
 
     def event(self, start, dur, ugen):
-        if type(start) is not list:
-            start = [start]
-            
-        for i in start:
-            t_start = sum(self.time, i)
-            ugen_start = sec_to_frames(t_start * bps(self.tempo))
-            ugen_end = ugen_start + sec_to_frames(dur * 60 / float(self.tempo))
-            self.last_frame = max(ugen_start, ugen_end, self.last_frame)
-    
-            if ugen_start not in self.event_dict.keys():
-                self.event_dict.update({ugen_start: [(self.ID, 'start', ugen)]})
-            else:
-                self.event_dict[ugen_start].append((self.ID, 'start', ugen))
-    
-            if ugen_end not in self.event_dict.keys():
-                self.event_dict.update({ugen_end: [(self.ID, 'stop', None)]})
-            else:
-                self.event_dict[ugen_end].append((self.ID, 'stop', None))
-    
-            self.ID += 1
+        t_start = sum(self.time, start)
+        ugen_start = sec_to_frames(t_start * bps(self.tempo))
+        ugen_end = ugen_start + sec_to_frames(dur * bps(self.tempo))
+        self.last_frame = max(ugen_start, ugen_end, self.last_frame)
+
+        if ugen_start not in self.event_dict.keys():
+            self.event_dict.update({ugen_start: [(self.ID, 'start', ugen)]})
+        else:
+            self.event_dict[ugen_start].append((self.ID, 'start', ugen))
+
+        if ugen_end not in self.event_dict.keys():
+            self.event_dict.update({ugen_end: [(self.ID, 'stop', None)]})
+        else:
+            self.event_dict[ugen_end].append((self.ID, 'stop', None))
+
+        self.ID += 1
 
 def bps(tempo):
     '''Beats per second.'''
