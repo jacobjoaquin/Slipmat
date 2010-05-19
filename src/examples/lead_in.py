@@ -4,7 +4,7 @@ import cProfile
 from slipmat import *
 import random
 
-def main():
+def main():    
     # Instruments
     @Instr
     def RingTine(dur, amp, freq_1, freq_2, peak=0):

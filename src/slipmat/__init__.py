@@ -114,12 +114,23 @@ class Sine(UGen):
     '''A sine wave oscillator unit generator.'''
 
     def __init__(self, amp=1.0, freq=440, phase=0.0):
+        if not isinstance(amp, UGen):
+            print 'amp'
+            amp = UVal(amp)
+            
+        if not isinstance(freq, UGen):
+            print 'freq'
+            freq = UVal(freq)
+                                
         self.amp = amp
-        self.freq = float(freq)
+        self.freq = freq
+        print 'self.freq', self.freq
         self.phase = phase
 
     def __iter__(self):
         self.index = 0
+        self.amp_iter = (i for i in self.amp)
+        self.freq_iter = (i for i in self.freq)
         return self
 
     def next(self):
@@ -127,8 +138,8 @@ class Sine(UGen):
         self.index += 1
 
         v = math.sin(self.phase * 2 * math.pi)
-        self.phase += self.freq / sr
-        return v * self.amp
+        self.phase += self.freq_iter.next() / float(sr)
+        return v * self.amp_iter.next()
 
 class UVal(UGen):
     '''Convert a numeric value to a unit generator object.'''
